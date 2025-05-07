@@ -8,7 +8,7 @@ provider:
   region: us-west-2
   ecr:
     images:
-      opgovaiimage:
+      opengovimage:
         path: D:\Work\OpGov Project\Workspace_AWS_OpenAI\OpGovSummarizationAWS  # Ensure this is the correct path to your Dockerfile
   environment:
     SUMMARIZATION_TABLE: meetings
@@ -31,9 +31,10 @@ functions:
 
   addMeeting:
     image:
-      name: opgovaiimage
+      name: opengovimage
+      command: ["addmeeting.insert_meeting"]
     memorySize: 3008       # Enough for whisper + torch
-    timeout: 120
+    timeout: 30
     package:
       include:
         - lambda/addmeeting.py
@@ -46,9 +47,10 @@ functions:
 
   getAllMeetings:
     image:
-      name: opgovaiimage
+      name: opengovimage
+      command: ["meetings.get_all_meetings"]
     memorySize: 3008       # Enough for whisper + torch
-    timeout: 120
+    timeout: 30
     package:
       include:
         - lambda/meetings.py
@@ -58,10 +60,6 @@ functions:
           path: meetings
           method: get
           cors: true
-
-package:
-  exclude:
-    - package/**  # Exclude unnecessary files
 
 resources:
   Resources:

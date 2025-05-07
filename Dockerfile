@@ -14,6 +14,3 @@ COPY lambda/ ./lambda/
 
 # Set working directory
 WORKDIR /lambda
-
-# Set the Lambda function handler (e.g., addmeeting.handler = addmeeting.py > handler function)
-CMD ["addmeeting.insert_meeting"]
