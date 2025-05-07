@@ -1,0 +1,85 @@
+service: city-council-meetings
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.10
+  region: us-west-2
+  ecr:
+    images:
+      opgovaiimage:
+        path: D:\Work\OpGov Project\Workspace_AWS_OpenAI\OpGovSummarizationAWS  # Ensure this is the correct path to your Dockerfile
+  environment:
+    SUMMARIZATION_TABLE: meetings
+    OPENAI_API_KEY: 
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Scan
+            - dynamodb:Query
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:902651842840:table/meetings       
+
+functions:
+
+  addMeeting:
+    image:
+      name: opgovaiimage
+    memorySize: 3008       # Enough for whisper + torch
+    timeout: 120
+    package:
+      include:
+        - lambda/addmeeting.py
+        - utils/**  # Include utils folder to the Lambda
+    events:
+      - http:
+          path: meetings
+          method: post
+          cors: true
+
+  getAllMeetings:
+    image:
+      name: opgovaiimage
+    memorySize: 3008       # Enough for whisper + torch
+    timeout: 120
+    package:
+      include:
+        - lambda/meetings.py
+        - utils/**  # Include utils folder to the Lambda
+    events:
+      - http:
+          path: meetings
+          method: get
+          cors: true
+
+package:
+  exclude:
+    - package/**  # Exclude unnecessary files
+
+resources:
+  Resources:
+    meetings:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: meetings
+        AttributeDefinitions:
+          - AttributeName: mediaUrl
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: mediaUrl
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        Tags:
+          - Key: Project
+            Value: CityCouncilAI
