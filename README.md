@@ -24,5 +24,6 @@ Request payload sample
   "agenda": "http://sanramonca.iqm2.com/citizens/FileOpen.aspx?Type=1&ID=3763&Inline=True",
   "mediaUrl": "https://www.youtube.com/watch?v=ym4gbuQyw1E",
   "location": "San Ramon, CA",
-  "title": "City Council Special Meeting Jan 10, 2025 5:00 PM"
+  "title": "City Council Special Meeting Jan 10, 2025 5:00 PM",
+  "public_comments": "https://www.sanramon.ca.gov/common/pages/GetFile.ashx?key=%2fR07ATnj"
 }
