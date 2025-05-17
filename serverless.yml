@@ -38,7 +38,6 @@ functions:
     package:
       include:
         - lambda/addmeeting.py
-        - utils/**  # Include utils folder to the Lambda
     events:
       - http:
           path: meetings
@@ -54,7 +53,6 @@ functions:
     package:
       include:
         - lambda/meetings.py
-        - utils/**  # Include utils folder to the Lambda
     events:
       - http:
           path: meetings

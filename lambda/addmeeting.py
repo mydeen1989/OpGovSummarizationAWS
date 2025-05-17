@@ -4,6 +4,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from utils_2.scrape_youtube import get_transcript_or_whisper
 from utils_2.summarize_text import summarize_text
+from utils_2.public_comments_extract import download_pdf, extract_text_from_pdf, summarize_text_with_gpt
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('meetings')  # Replace with your table name
@@ -18,6 +19,7 @@ def insert_meeting(event, context):
         agenda = body.get("agenda")
         location = body.get("location")
         title = body.get("title")
+        public_comments = body.get("public_comments")
 
         if not media_url or not date:
             return {
@@ -72,6 +74,20 @@ def insert_meeting(event, context):
         print("transcript ", transcript)
         summary = summarize_text(transcript, lang='English')
         print('summary', summary)
+  
+        print("Downloading PDF...")
+        file_like = download_pdf(public_comments)
+    
+        print("Extracting text...")
+        text = extract_text_from_pdf(file_like)
+
+        print("Summarizing using GPT-4...")
+        public_comments_summary = summarize_text_with_gpt(text)
+
+        print("\n Summary:\n")
+        print(public_comments_summary)
+
+        data = json.loads(summary)
 
 
         new_item = {
@@ -79,33 +95,15 @@ def insert_meeting(event, context):
             "title": title,
             "date": date,
             "time": time,
-            "topics": ["Road Repairs", "Transportation", "Infrastruture"],
-            "speakers": [
-                {"name": "Ethan Hunt", "value": "30%"},
-                {"name": "Grace Field", "value": "25%"}
-            ],
+            "topics": data.get("topics", []),
+            "speakers": data.get("speakers", []),
             "agenda": agenda,
             "mediaUrl": media_url,
-            "summary" : ("Author: Mayor Armstrong, Council Member Jette, Council Member Rubio"),
-            "transcript": (
-                "Author: Mayor Armstrong, Council Member Jette, Council Member Rubio, "
-                "Council Member Verose, Shas from Troop 621, Sherog Kaani, Anthony D'Angelus, "
-                "city clerk, and various public commentators.\n\nSummary:\n\nMayor Armstrong and "
-                "council members Jette, Rubio, and Verose confirmed attendance at the meeting.\n"
-                "Shas from Troop 621 led the Pledge of Allegiance..."
-            ),
-            "keyTakeways": [
-                "Foster increased community engagement through transparent council actions and ",
-                "strengthened senior programs.\nEvaluate and possibly update emergency preparedness ",
-                "plans based on member suggestions in council discussions"
-            ],
-            "keyMoments": [
-                "Budget Approval", "Public Safety", "Park Plan"
-            ],
-            "publicComments": [
-                {"name": "Ethan Hunt", "value": "20"},
-                {"name": "Grace Field", "value": "30"}
-            ]
+            "summary" : data.get("summary", ""),
+            "transcript": transcript,
+            "keyTakeways": data.get("keyTakeaways", []),
+            "keyMoments": data.get("keyMoments", []),
+            "publicComments": public_comments_summary
         }
 
         table.put_item(Item=new_item)
